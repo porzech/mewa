@@ -27,7 +27,7 @@ john_smith.my_home_devices.hallway_switch
 
 *Note, that the devices need not be physical entities. They may be pure software constructs. Hence a single physical device may appear as a number of devices from the perspective of the channel*
 
-Devices connect to channels using websocket protocol and exchanges packets. All packets passed between the device and the channel are in JSON format. Below you will find the complete reference of all the packets that constitute the channel API
+Devices connect to channels using websocket protocol and exchange information using data structures called **packets**. All packets passed between the device and the channel are in JSON format. Below you will find the complete reference of all the packet types that constitute the channel API
 
 Note that the channel API only defines how information is exchanged between devices and the channel but it does not specify the actual information that devices may want to sent to each other. In other words - the channel provides efficient mechanism for data exchange, but the meaning of the data exchanged is defined on a higher level - the level of services exposed by the devices to each-other. Those services are specified in a separate reference document.
 
