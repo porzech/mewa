@@ -6,12 +6,15 @@ import scala.concurrent.Future
 import play.libs.Akka
 import akka.actor.Props
 import com.anthill.channels.ChannelManagerActor
+import play.api.Play
+import actors.ConnectionManagerActor
 
 
 object Global extends GlobalSettings {
 
   override def onStart(app: Application) {
-    val channelManager = Akka.system.actorOf(Props[ChannelManagerActor], "channel-manager")
-    Logger.info("Channel manager started: " + channelManager)
+    val authtUrl = Play.current.configuration.getString("auth.url")
+    val channelManager = Akka.system.actorOf(ChannelManagerActor.props(authtUrl), "channel-manager")
+    val connectionManager = Akka.system.actorOf(Props[ConnectionManagerActor], "connection-manager")
   }
 }

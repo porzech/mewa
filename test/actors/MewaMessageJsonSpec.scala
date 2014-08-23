@@ -7,19 +7,21 @@ import play.api.libs.json.{Json, JsSuccess}
 import play.api.test._
 import play.api.test.Helpers._
 import play.api.libs.json.JsSuccess
-import actors.WebSocketActor._
+import cc.mewa.api.Protocol._
+import actors.ConnectionActor._
 
-object ClientMessageSpec extends Specification{
+
+object MewaMessageJsonSpec extends Specification{
   
   /*
    * Convert to json
    * Read from json
    * compare to original message
    */
-  def assertFromJson(msg:ClientMessage) = {
+  def assertFromJson(msg:MewaMessage) = {
       val jsvalue = Json.toJson(msg)
-      val msg2 = Json.fromJson[ClientMessage](jsvalue)
-      val jsok = msg2.asInstanceOf[JsSuccess[ClientMessage]]
+      val msg2 = Json.fromJson[MewaMessage](jsvalue)
+      val jsok = msg2.asInstanceOf[JsSuccess[MewaMessage]]
       jsok.get must beEqualTo(msg)
   }
 }
@@ -27,18 +29,18 @@ object ClientMessageSpec extends Specification{
 @RunWith(classOf[JUnitRunner])
 class ConnectMessageSpec extends Specification {
 
-  import ClientMessageSpec._
+  import MewaMessageJsonSpec._
 
   "Connect message" should {
     
-    val expected = """{ "message":"connect",
+    val expected = """{ "type":"connect",
 												"channel":"name",
 												"device":"device1",
 												"password":"pass" }
 									 """
     
     "serialize to json" in {
-      val msg :ClientMessage = ConnectToChannel("name", "device1", "pass")
+      val msg :MewaMessage = ConnectToChannel("name", "device1", "pass")
       val jsvalue = Json.toJson(msg).toString() 
       jsvalue must beEqualTo(expected.replaceAll("\\s+", ""))
     }
@@ -54,14 +56,14 @@ class ConnectMessageSpec extends Specification {
 @RunWith(classOf[JUnitRunner])
 class DisconnectMessageSpec extends Specification {
 
-  import ClientMessageSpec._
+  import MewaMessageJsonSpec._
 
   "Disconnect message" should {
     
-    val expected = """{"message":"disconnect"}"""
+    val expected = """{"type":"disconnect"}"""
     
     "serialize to json" in {
-      val msg : ClientMessage = DisconnectFromChannel
+      val msg : MewaMessage = DisconnectFromChannel
       val jsvalue = Json.toJson(msg).toString() 
       jsvalue must beEqualTo(expected)
     }
@@ -78,14 +80,14 @@ class DisconnectMessageSpec extends Specification {
 @RunWith(classOf[JUnitRunner])
 class ConnectedEventSpec extends Specification {
 
-  import ClientMessageSpec._
+  import MewaMessageJsonSpec._
 
   "ConnectedEvent message" should {
     
-    val expected = """{"message":"connected"}"""
+    val expected = """{"type":"connected"}"""
     
     "serialize to json" in {
-      val msg : ClientMessage = ConnectedEvent
+      val msg : MewaMessage = ConnectedEvent
       val jsvalue = Json.toJson(msg).toString() 
       jsvalue must beEqualTo(expected)
     }
@@ -101,14 +103,14 @@ class ConnectedEventSpec extends Specification {
 @RunWith(classOf[JUnitRunner])
 class AlreadyConnectedErrorSpec extends Specification {
 
-  import ClientMessageSpec._
+  import MewaMessageJsonSpec._
 
   "AlreadyConnectedError message" should {
     
-    val expected = """{"message":"already-connected-error"}"""
+    val expected = """{"type":"already-connected-error"}"""
     
     "serialize to json" in {
-      val msg : ClientMessage = AlreadyConnectedError
+      val msg : MewaMessage = AlreadyConnectedError
       val jsvalue = Json.toJson(msg).toString() 
       jsvalue must beEqualTo(expected)
     }
@@ -124,14 +126,14 @@ class AlreadyConnectedErrorSpec extends Specification {
 @RunWith(classOf[JUnitRunner])
 class AuthorizationErrorSpec extends Specification {
 
-  import ClientMessageSpec._
+  import MewaMessageJsonSpec._
 
   "AuthorizationError message" should {
     
-    val expected = """{"message":"authorization-error"}"""
+    val expected = """{"type":"authorization-error"}"""
     
     "serialize to json" in {
-      val msg : ClientMessage = AuthorizationError
+      val msg : MewaMessage = AuthorizationError
       val jsvalue = Json.toJson(msg).toString() 
       jsvalue must beEqualTo(expected)
     }
@@ -147,14 +149,14 @@ class AuthorizationErrorSpec extends Specification {
 @RunWith(classOf[JUnitRunner])
 class NotConnectedErrorSpec extends Specification {
 
-  import ClientMessageSpec._
+  import MewaMessageJsonSpec._
 
   "NotConnectedError message" should {
     
-    val expected = """{"message":"not-connected-error"}"""
+    val expected = """{"type":"not-connected-error"}"""
     
     "serialize to json" in {
-      val msg : ClientMessage = NotConnectedError
+      val msg : MewaMessage = NotConnectedError
       val jsvalue = Json.toJson(msg).toString() 
       jsvalue must beEqualTo(expected)
     }
@@ -169,14 +171,14 @@ class NotConnectedErrorSpec extends Specification {
 @RunWith(classOf[JUnitRunner])
 class DisconnectedEventSpec extends Specification {
 
-  import ClientMessageSpec._
+  import MewaMessageJsonSpec._
 
   "DisconnectedEvent message" should {
     
-    val expected = """{"message":"disconnected"}"""
+    val expected = """{"type":"disconnected"}"""
     
     "serialize to json" in {
-      val msg : ClientMessage = DisconnectedEvent
+      val msg : MewaMessage = DisconnectedEvent
       val jsvalue = Json.toJson(msg).toString() 
       jsvalue must beEqualTo(expected)
     }
@@ -192,20 +194,20 @@ class DisconnectedEventSpec extends Specification {
 @RunWith(classOf[JUnitRunner])
 class DeviceJonedChannelSpec extends Specification {
 
-  import ClientMessageSpec._
+  import MewaMessageJsonSpec._
 
   "DeviceJonedChannel message" should {
     
-    val expected = """{ "message": "joined-channel", "device": "device1"}""".replaceAll("\\s+", "")
+    val expected = """{ "type": "joined-channel", "time": "", "device": "device1"}""".replaceAll("\\s+", "")
     
     "serialize to json" in {
-      val msg :ClientMessage = DeviceJoinedChannel("device1")
+      val msg: MewaMessage = DeviceJoinedChannel("", "device1")
       val jsvalue = Json.toJson(msg).toString() 
       jsvalue must beEqualTo(expected)
     }
 
     "deserialize from json" in {
-      val msg = DeviceJoinedChannel("device1")
+      val msg = DeviceJoinedChannel("", "device1")
       assertFromJson(msg)
     }
   }
@@ -215,20 +217,20 @@ class DeviceJonedChannelSpec extends Specification {
 @RunWith(classOf[JUnitRunner])
 class DeviceLeftChannelSpec extends Specification {
 
-  import ClientMessageSpec._
+  import MewaMessageJsonSpec._
 
   "DeviceJonedLeft message" should {
     
-    val expected = """{ "message": "left-channel", "device": "device1"}""".replaceAll("\\s+", "")
+    val expected = """{ "type": "left-channel", "time": "", "device": "device1"}""".replaceAll("\\s+", "")
     
     "serialize to json" in {
-      val msg :ClientMessage = DeviceLeftChannel("device1")
+      val msg :MewaMessage = DeviceLeftChannel("", "device1")
       val jsvalue = Json.toJson(msg).toString() 
       jsvalue must beEqualTo(expected)
     }
 
     "deserialize from json" in {
-      val msg = DeviceLeftChannel("device1")
+      val msg = DeviceLeftChannel("", "device1")
       assertFromJson(msg)
     }
   }
@@ -238,15 +240,15 @@ class DeviceLeftChannelSpec extends Specification {
 @RunWith(classOf[JUnitRunner])
 class SendEventSpec extends Specification {
 
-  import ClientMessageSpec._
+  import MewaMessageJsonSpec._
 
   "SendEvent message" should {
     
-    val expected = """{"message": "send-event", "id": "eventId", "params":"params1"}
+    val expected = """{"type": "send-event", "id": "eventId", "params":"params1"}
 									 """.replaceAll("\\s+", "")
     
     "serialize to json" in {
-      val msg :ClientMessage = SendEvent("eventId", "params1")
+      val msg :MewaMessage = SendEvent("eventId", "params1")
       val jsvalue = Json.toJson(msg).toString() 
       jsvalue must beEqualTo(expected)
     }
@@ -262,21 +264,21 @@ class SendEventSpec extends Specification {
 @RunWith(classOf[JUnitRunner])
 class EventSpec extends Specification {
 
-  import ClientMessageSpec._
+  import MewaMessageJsonSpec._
 
   "Event message" should {
     
-    val expected = """{"message": "event", "device": "device1", "id": "service.event1", "params":"json"}
+    val expected = """{"type": "event", "time": "", "device": "device1", "id": "service.event1", "params":"json"}
 									 """.replaceAll("\\s+", "")
     
     "serialize to json" in {
-      val msg :ClientMessage = Event("device1", "service.event1", "json")
+      val msg :MewaMessage = Event("", "device1", "service.event1", "json")
       val jsvalue = Json.toJson(msg).toString() 
       jsvalue must beEqualTo(expected)
     }
 
     "deserialize from json" in {
-      val msg = Event("device1", "service.event1", "json")
+      val msg = Event("", "device1", "service.event1", "json")
       assertFromJson(msg)
     }
   }
@@ -286,15 +288,15 @@ class EventSpec extends Specification {
 @RunWith(classOf[JUnitRunner])
 class SendMessageSpec extends Specification {
 
-  import ClientMessageSpec._
+  import MewaMessageJsonSpec._
 
   "SendMessage message" should {
     
-    val expected = """{"message": "send-message", "device": "device1", "id": "messageId", "params":"json"}
+    val expected = """{"type": "send-message", "device": "device1", "id": "messageId", "params":"json"}
 									 """.replaceAll("\\s+", "")
     
     "serialize to json" in {
-      val msg :ClientMessage = SendMessage("device1", "messageId", "json")
+      val msg :MewaMessage = SendMessage("device1", "messageId", "json")
       val jsvalue = Json.toJson(msg).toString() 
       jsvalue must beEqualTo(expected)
     }
@@ -310,21 +312,21 @@ class SendMessageSpec extends Specification {
 @RunWith(classOf[JUnitRunner])
 class MessageSpec extends Specification {
 
-  import ClientMessageSpec._
+  import MewaMessageJsonSpec._
 
   "Message message" should {
     
-    val expected = """{"message": "message", "device": "source", "id": "messageId", "params":"json"}
+    val expected = """{"type": "message", "time": "", "device": "source", "id": "messageId", "params":"json"}
 									 """.replaceAll("\\s+", "")
     
     "serialize to json" in {
-      val msg :ClientMessage = Message("source", "messageId", "json")
+      val msg :MewaMessage = Message("", "source", "messageId", "json")
       val jsvalue = Json.toJson(msg).toString() 
       jsvalue must beEqualTo(expected)
     }
 
     "deserialize from json" in {
-      val msg = Message("source", "messageId", "json")
+      val msg = Message("", "source", "messageId", "json")
       assertFromJson(msg)
     }
   }
@@ -334,14 +336,14 @@ class MessageSpec extends Specification {
 @RunWith(classOf[JUnitRunner])
 class GetDevicesSpec extends Specification {
 
-  import ClientMessageSpec._
+  import MewaMessageJsonSpec._
 
   "GetDevices message" should {
     
-    val expected = """{"message":"get-devices"}"""
+    val expected = """{"type":"get-devices"}"""
     
     "serialize to json" in {
-      val msg : ClientMessage = GetDevices
+      val msg : MewaMessage = GetDevices
       val jsvalue = Json.toJson(msg).toString() 
       jsvalue must beEqualTo(expected)
     }
@@ -357,22 +359,23 @@ class GetDevicesSpec extends Specification {
 @RunWith(classOf[JUnitRunner])
 class DevicesEventSpec extends Specification {
 
-  import ClientMessageSpec._
+  import MewaMessageJsonSpec._
 
   "DevicesEvent message" should {
     
-    val expected = """{ "message":"devices-event",
+    val expected = """{ "type":"devices-event", 
+												"time": "",
 												"devices": ["device1", "device2"] }
 									 """.replaceAll("\\s+", "")
     
     "serialize to json" in {
-      val msg : ClientMessage = DevicesEvent(List("device1", "device2"))
+      val msg : MewaMessage = DevicesEvent("", List("device1", "device2"))
       val jsvalue = Json.toJson(msg).toString() 
       jsvalue must beEqualTo(expected)
     }
 
     "deserialize from json" in {
-      val msg = DevicesEvent(List("device1", "device2"))
+      val msg = DevicesEvent("", List("device1", "device2"))
       assertFromJson(msg)
     }
   }

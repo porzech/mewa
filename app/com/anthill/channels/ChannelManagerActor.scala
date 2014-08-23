@@ -1,12 +1,13 @@
 package com.anthill.channels
 
 import akka.actor.{Actor, ActorRef, Props, ActorLogging}
+import dispatch._, Defaults._
 
 
 
 
 object ChannelManagerActor {
-  def props() = Props(new ChannelManagerActor())
+  def props(authtUrl: Option[String]) = Props(new ChannelManagerActor(authtUrl))
   
     /** Channel manager messages */
   sealed trait ChannelManagerMessage
@@ -22,26 +23,47 @@ object ChannelManagerActor {
 /**
  * Channel
  */
-class ChannelManagerActor extends Actor with ActorLogging{
+class ChannelManagerActor(auth: Option[String]) extends Actor with ActorLogging{
 
   import ChannelManagerActor._
   
   def receive = {
     
     case GetChannel(channel, device, password) => 
-      if (canAccess(channel, device, password)){
-        sender() ! ChannelFound(getOrCreateUserActor(channel))
-      }
-      else sender() ! AuthorizationError
+      processGetChannel(sender, channel, device, password)
+  }
+
+
+  def processGetChannel(sender: ActorRef, channel: String, device: String, password: String): Unit = {
+    
+    auth match {
+      case Some(authUrl) => 
+        val authRequest = url(authUrl).POST
+                            .addParameter("channel", channel)
+                            .addParameter("password", password)
+        for (response <- Http(authRequest OK as.String)){
+          if(response == "ok")                    
+            sender ! ChannelFound(getOrCreateChannel(channel))
+          else
+            sender ! AuthorizationError
+        }
+        
+      case None =>
+        if(isValidChannelName(channel)){
+          sender ! ChannelFound(getOrCreateChannel(channel))
+        }
+        else{
+          sender ! AuthorizationError
+        }
+    }
   }
   
-  /** Check if given credentials give access to the channel */
-  def canAccess(channel: String, device: String, password: String): Boolean = {
-    channel.length > 0 && device.length > 0 && password.length > 0
-  } 
+  def isValidChannelName(name: String): Boolean = {
+    name.length > 0
+  }
   
   /** Find or create channel actor */
-  def getOrCreateUserActor(channelName: String): ActorRef = {
+  def getOrCreateChannel(channelName: String): ActorRef = {
     context.child(channelName) match {
       case Some(child) => child
       case None => context.actorOf(Props(classOf[ChannelActor]), channelName)
